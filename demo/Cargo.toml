@@ -4,3 +4,4 @@ version = "0.0.0"
 edition = "2024"
 
 [dependencies]
+flint-lll-sys = { path = "../flint-lll-sys" }
