@@ -32,14 +32,14 @@ fn main() {
         let mut mat = mat.assume_init();
 
         for i in 0..n {
-            fmpz_set_si(fmpz_mat_entry(&mut mat, i, i), 1);
+            fmpz_set_si(fmpz_mat_entry(&mat, i, i), 1);
             let sc = Integer::from(&coeffs[i as usize] * &scale);
-            fmpz_set_mpz(fmpz_mat_entry(&mut mat, i, n), sc.as_raw());
+            fmpz_set_mpz(fmpz_mat_entry(&mat, i, n), sc.as_raw());
         }
         eprintln!("Matrix before LLL:");
         for i in 0..n {
             for j in 0..n+1 {
-                fmpz_get_mpz(x.as_raw_mut(), fmpz_mat_entry(&mut mat, i, j));
+                fmpz_get_mpz(x.as_raw_mut(), fmpz_mat_entry(&mat, i, j));
                 eprint!("{x} ");
             }
             eprintln!();
@@ -47,17 +47,17 @@ fn main() {
 
         let mut fl = std::mem::MaybeUninit::<fmpz_lll_struct>::uninit();
         fmpz_lll_context_init_default(fl.as_mut_ptr());
-        let mut fl = fl.assume_init();
+        let fl = fl.assume_init();
 
         let start = std::time::Instant::now();
-        fmpz_lll(&mut mat, std::ptr::null_mut(), &mut fl);
+        fmpz_lll(&mut mat, std::ptr::null_mut(), &fl);
         dbg!(start.elapsed());
 
         eprintln!("Matrix after LLL:");
         let mut num_solutions = 0;
         for i in 0..n {
             for j in 0..n+1 {
-                fmpz_get_mpz(x.as_raw_mut(), fmpz_mat_entry(&mut mat, i, j));
+                fmpz_get_mpz(x.as_raw_mut(), fmpz_mat_entry(&mat, i, j));
                 eprint!("{x} ");
             }
             eprintln!();
@@ -65,7 +65,7 @@ fn main() {
             if x == 0 {
                 let mut s = Integer::from(0);
                 for j in 0..n {
-                    fmpz_get_mpz(x.as_raw_mut(), fmpz_mat_entry(&mut mat, i, j));
+                    fmpz_get_mpz(x.as_raw_mut(), fmpz_mat_entry(&mat, i, j));
                     s += &coeffs[j as usize] * &x;
                 }
                 assert_eq!(s, 0);

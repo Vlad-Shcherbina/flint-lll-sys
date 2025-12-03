@@ -8,12 +8,6 @@ use gmp_mpfr_sys::gmp::mpz_t;
 pub type slong = c_long;
 
 pub type fmpz = slong;
-// In C: typedef fmpz fmpz_t[1];
-// The array decays to a pointer when passed to functions.
-// We add this type alias to preserve syntactic similarity between
-// C function headers and Rust declarations.
-// But this alias should only be used in function arg types!
-type fmpz_t = *mut fmpz;
 
 #[repr(C)]
 pub struct fmpz_mat_struct {
@@ -22,10 +16,6 @@ pub struct fmpz_mat_struct {
     pub c: slong,
     pub stride: slong,
 }
-
-// In C: typedef fmpz_mat_struct fmpz_mat_t[1];
-// Same pattern as fmpz_t - represents the pointer after array decay.
-type fmpz_mat_t = *mut fmpz_mat_struct;
 
 // LLL types
 #[repr(C)]
@@ -48,30 +38,26 @@ pub struct fmpz_lll_struct {
     pub gt: gram_type,
 }
 
-// In C: typedef fmpz_lll_struct fmpz_lll_t[1];
-// Same pattern as fmpz_t and fmpz_mat_t
-type fmpz_lll_t = *mut fmpz_lll_struct;
-
 unsafe extern "C" {
     // fmpz functions
-    pub fn fmpz_init(f: fmpz_t);
-    pub fn fmpz_clear(f: fmpz_t);
+    pub fn fmpz_init(f: *mut fmpz);
+    pub fn fmpz_clear(f: *mut fmpz);
 
-    pub fn fmpz_set_si(f: fmpz_t, val: slong);
-    pub fn fmpz_get_si(f: fmpz_t) -> slong; // undefined if f does not fit into a slong
+    pub fn fmpz_set_si(f: *mut fmpz, val: slong);
+    pub fn fmpz_get_si(f: *const fmpz) -> slong; // undefined if f does not fit into a slong
 
-    pub fn fmpz_set_mpz(f: fmpz_t, x: *const mpz_t);
-    pub fn fmpz_get_mpz(x: *mut mpz_t, f: fmpz_t);
+    pub fn fmpz_set_mpz(f: *mut fmpz, x: *const mpz_t);
+    pub fn fmpz_get_mpz(x: *mut mpz_t, f: *const fmpz);
 
     // fmpz_mat functions
-    pub fn fmpz_mat_init(mat: fmpz_mat_t, rows: slong, cols: slong);
-    pub fn fmpz_mat_clear(mat: fmpz_mat_t);
+    pub fn fmpz_mat_init(mat: *mut fmpz_mat_struct, rows: slong, cols: slong);
+    pub fn fmpz_mat_clear(mat: *mut fmpz_mat_struct);
 
-    pub fn fmpz_mat_entry(mat: fmpz_mat_t, i: slong, j: slong) -> *mut fmpz;
+    pub fn fmpz_mat_entry(mat: *const fmpz_mat_struct, i: slong, j: slong) -> *mut fmpz;
 
     // fmpz_lll functions
-    pub fn fmpz_lll_context_init_default(fl: fmpz_lll_t);
-    pub fn fmpz_lll(B: fmpz_mat_t, U: fmpz_mat_t, fl: fmpz_lll_t);
+    pub fn fmpz_lll_context_init_default(fl: *mut fmpz_lll_struct);
+    pub fn fmpz_lll(B: *mut fmpz_mat_struct, U: *mut fmpz_mat_struct, fl: *const fmpz_lll_struct);
 }
 
 #[cfg(test)]
@@ -85,14 +71,14 @@ mod tests {
             let mut x: fmpz = 0;
             fmpz_init(&mut x);
             fmpz_set_si(&mut x, 42);
-            let result = fmpz_get_si(&mut x);
+            let result = fmpz_get_si(&x);
             fmpz_clear(&mut x);
             assert_eq!(result, 42);
 
             let mut x: fmpz = 0;
             fmpz_init(&mut x);
             fmpz_set_si(&mut x, -12345);
-            let result = fmpz_get_si(&mut x);
+            let result = fmpz_get_si(&x);
             fmpz_clear(&mut x);
             assert_eq!(result, -12345);
         }
@@ -118,7 +104,7 @@ mod tests {
             let mut z2 = std::mem::MaybeUninit::<mpz_t>::uninit();
             gmp::mpz_init(z2.as_mut_ptr());
             let mut z2 = z2.assume_init();
-            fmpz_get_mpz(&mut z2, &mut f);
+            fmpz_get_mpz(&mut z2, &f);
 
             // Verify they're equal
             let cmp = gmp::mpz_cmp(&z, &z2);
