@@ -27,6 +27,31 @@ pub struct fmpz_mat_struct {
 // Same pattern as fmpz_t - represents the pointer after array decay.
 type fmpz_mat_t = *mut fmpz_mat_struct;
 
+// LLL types
+#[repr(C)]
+pub enum rep_type {
+    GRAM = 0,
+    Z_BASIS = 1,
+}
+
+#[repr(C)]
+pub enum gram_type {
+    APPROX = 0,
+    EXACT = 1,
+}
+
+#[repr(C)]
+pub struct fmpz_lll_struct {
+    pub delta: f64,
+    pub eta: f64,
+    pub rt: rep_type,
+    pub gt: gram_type,
+}
+
+// In C: typedef fmpz_lll_struct fmpz_lll_t[1];
+// Same pattern as fmpz_t and fmpz_mat_t
+type fmpz_lll_t = *mut fmpz_lll_struct;
+
 unsafe extern "C" {
     // fmpz functions
     pub fn fmpz_init(f: fmpz_t);
@@ -43,6 +68,10 @@ unsafe extern "C" {
     pub fn fmpz_mat_clear(mat: fmpz_mat_t);
 
     pub fn fmpz_mat_entry(mat: fmpz_mat_t, i: slong, j: slong) -> *mut fmpz;
+
+    // fmpz_lll functions
+    pub fn fmpz_lll_context_init_default(fl: fmpz_lll_t);
+    pub fn fmpz_lll(B: fmpz_mat_t, U: fmpz_mat_t, fl: fmpz_lll_t);
 }
 
 #[cfg(test)]
