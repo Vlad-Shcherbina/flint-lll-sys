@@ -2,8 +2,14 @@
 name = "flint-lll-sys"
 version = "0.1.0"
 edition = "2024"
+links = "flint"
 
 [lib]
 doctest = false
 
 [dependencies]
+libc = "0.2"
+gmp-mpfr-sys = "1.6"
+
+[build-dependencies]
+gmp-mpfr-sys = "1.6"
