@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule: [cron: "35 23 * * *"]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  everything:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - run: |
+          rustup install nightly
+          rustup default nightly
+          rustup component add clippy
+          cargo --version
+          cargo clippy --version
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo fetch --locked
+
+      - run: cargo check --tests
+
+      - run: cargo test
+
+      - run: cargo clippy --tests -- --D warnings
+
+      - run: cargo run
