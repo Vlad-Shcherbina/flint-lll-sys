@@ -45,14 +45,13 @@ fn main() {
 
     // Build FLINT
     let mut cmd = Command::new("make");
+    cmd.current_dir(&build_dir);
+    cmd.arg("MAINTAINER_MODE=no");  // prevent regenerating ./configure when "stale"
     if let Ok(makeflags) = env::var("CARGO_MAKEFLAGS") && !makeflags.is_empty() {
         // Hook into Cargo's jobserver if available.
         cmd.env("MAKEFLAGS", makeflags);
     }
-    let make_status = cmd
-        .current_dir(&build_dir)
-        .status()
-        .unwrap();
+    let make_status = cmd.status().unwrap();
     if !make_status.success() {
         panic!("make failed");
     }
@@ -74,6 +73,7 @@ fn main() {
     let install_status = Command::new("make")
         .arg("install")
         .current_dir(&build_dir)
+        .arg("MAINTAINER_MODE=no")  // prevent regenerating ./configure when "stale"
         .status()
         .unwrap();
     if !install_status.success() {
