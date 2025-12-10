@@ -2,7 +2,19 @@ use std::env;
 use std::path::PathBuf;
 use std::process::Command;
 
+fn is_clippy() -> bool {
+    std::env::var_os("CLIPPY_ARGS").is_some()
+}
+
 fn main() {
+    println!("cargo:rerun-if-changed=flint/");
+    println!("cargo:rerun-if-changed=build.rs");
+
+    if is_clippy() {
+        println!("cargo:warning=skipping native build for clippy");
+        return;
+    }
+
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let flint_src = PathBuf::from("flint").canonicalize().unwrap();
     let build_dir = out_dir.join("build");
@@ -85,7 +97,4 @@ fn main() {
     println!("cargo:rustc-link-lib=static=flint");
     println!("cargo:rustc-link-lib=gmp");
     println!("cargo:rustc-link-lib=mpfr");
-
-    println!("cargo:rerun-if-changed=flint/");
-    println!("cargo:rerun-if-changed=build.rs");
 }
